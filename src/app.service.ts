@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
+interface AuthResponse {
+  status: string;
+}
+
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
+  CheckAuth(): AuthResponse {
+    return {status: "OK"};
   }
 }
