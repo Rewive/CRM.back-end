@@ -9,6 +9,9 @@ export class Auth {
   name: string;
 
   @Prop()
+  lastname: string;
+
+  @Prop()
   email: string;
 
   @Prop()
@@ -16,6 +19,9 @@ export class Auth {
 
   @Prop()
   token: string;
+
+  @Prop({ default: false })
+  confirmed: boolean;
 }
 
 export const AuthSchema = SchemaFactory.createForClass(Auth);

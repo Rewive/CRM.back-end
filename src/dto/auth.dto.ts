@@ -7,6 +7,10 @@ export class CreateAuthDto {
 
     @IsString()
     @IsNotEmpty()
+    public lastname: string;
+
+    @IsString()
+    @IsNotEmpty()
     @IsOptional()
     @IsEmail()
     public email: string;
