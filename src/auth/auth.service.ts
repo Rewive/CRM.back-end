@@ -2,8 +2,8 @@ import { Injectable, ConflictException, UnauthorizedException, NotFoundException
 import { TokenExpiredError } from 'jsonwebtoken';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { Auth } from '../../schemas/auth.schema';
-import { CreateAuthDto } from '../../dto/auth.dto';
+import { Auth } from './models/auth.model';
+import { LoginAuthDto, SignAuthDto } from './dto'
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 
@@ -18,18 +18,18 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    async create(CreateAuthDto: CreateAuthDto): Promise<object> {
+    async sign(SignAuthDto: SignAuthDto): Promise<object> {
         // Проверка на наличие пользователя с таким же адресом электронной почты
-        const existingUser = await this.AuthModel.findOne({ email: CreateAuthDto.email });
+        const existingUser = await this.AuthModel.findOne({ email: SignAuthDto.email });
         if (existingUser) {
             throw new ConflictException('Email already exists');
         }
 
         // Хеширование пароля с помощью argon2i
-        const hashedPassword = await argon2.hash(CreateAuthDto.password, { type: argon2.argon2i });
+        const hashedPassword = await argon2.hash(SignAuthDto.password, { type: argon2.argon2i });
 
         // Сохранение пользователя в базе данных с хешированным паролем
-        const createdAuth = new this.AuthModel({ ...CreateAuthDto, password: hashedPassword });
+        const createdAuth = new this.AuthModel({ ...SignAuthDto, password: hashedPassword });
         const result = await createdAuth.save();
 
         // Создание токена JWT
@@ -41,7 +41,7 @@ export class AuthService {
 
         // Создание токена для подтверждения регистрации с дополнительной информацией и сроком действия
         const confirmtoken = this.jwtService.sign(
-            { id: result._id, type: 'confirmation', email: CreateAuthDto.email },
+            { id: result._id, type: 'confirmation', email: SignAuthDto.email },
             { expiresIn: '7d' },
         );
 
@@ -51,15 +51,15 @@ export class AuthService {
         return { access_token: token, link: confirmationLink };
     }
 
-    async login(CreateAuthDto: CreateAuthDto): Promise<object> {
+    async login(LoginAuthDto: LoginAuthDto): Promise<object> {
         // Поиск пользователя по адресу электронной почты
-        const user = await this.AuthModel.findOne({ email: CreateAuthDto.email });
+        const user = await this.AuthModel.findOne({ email: LoginAuthDto.email });
         if (!user) {
             throw new UnauthorizedException('Invalid email or password');
         }
 
         // Проверка совпадения паролей с помощью argon2.verify()
-        const passwordMatch = await argon2.verify(user.password, CreateAuthDto.password);
+        const passwordMatch = await argon2.verify(user.password, LoginAuthDto.password);
         if (!passwordMatch) {
             throw new UnauthorizedException('Invalid email or password');
         }
