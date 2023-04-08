@@ -14,12 +14,14 @@ async function bootstrap() {
       maxParamLength: configService.get('MAX_PARAMS_LENGTH'),
     }),
   );
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
     }),
   );
+  
   app.getHttpAdapter().getInstance().register(helmet);
   const config = new DocumentBuilder()
     .setTitle('CRM')
