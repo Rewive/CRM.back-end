@@ -3,8 +3,9 @@ import { TokenExpiredError } from 'jsonwebtoken';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Auth } from './models/auth.model';
-import { LoginAuthDto, SignAuthDto } from './dto'
+import { LoginAuthDto, SignAuthDto, ConfirmAuthDto } from './dto'
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 
 interface AuthResponse {
@@ -16,7 +17,7 @@ export class AuthService {
     constructor(
         @InjectModel(Auth.name) private AuthModel: Model<Auth>,
         private jwtService: JwtService,
-    ) { }
+    ) {}
 
     async sign(SignAuthDto: SignAuthDto): Promise<object> {
         // Проверка на наличие пользователя с таким же адресом электронной почты
@@ -33,7 +34,7 @@ export class AuthService {
         const result = await createdAuth.save();
 
         // Создание токена JWT
-        const token = this.jwtService.sign({ id: result._id },{ expiresIn: '30d' });
+        const token = this.jwtService.sign({ id: result._id }, { expiresIn: '30d' });
 
         // Сохранение токена в базе данных
         result.token = token;
@@ -46,7 +47,7 @@ export class AuthService {
         );
 
         // Создание ссылки для подтверждения регистрации
-        const confirmationLink = `http://localhost:3001/auth/confirm/${confirmtoken}`;
+        const confirmationLink = `http://localhost:${new ConfigService().get('PORT')}/api/auth/confirm/${confirmtoken}`;
 
         return { access_token: token, link: confirmationLink };
     }
@@ -70,11 +71,11 @@ export class AuthService {
         return { access_token: token };
     }
 
-    async confirm(token: string): Promise<object> {
+    async confirm(confirmAuthDto: ConfirmAuthDto): Promise<object> {
         let payload: { id: any; };
         try {
             // Проверка токена JWT
-            payload = this.jwtService.verify(token);
+            payload = this.jwtService.verify(confirmAuthDto.token);
         } catch (error) {
             if (error instanceof TokenExpiredError) {
                 throw new UnauthorizedException('Token expired');

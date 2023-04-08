@@ -1,8 +1,10 @@
-import { Controller, Post, Get, Body, UseGuards, Param, Patch, Delete, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Param, Patch, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUsersDto, DeleteUsersDto, UpdateUsersDto, IdUsersDto } from './dto'
 import { JwtAuthGuard } from '../guards/jwt-auth.guards';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
+@UseGuards(ThrottlerGuard) 
 @Controller('api/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }

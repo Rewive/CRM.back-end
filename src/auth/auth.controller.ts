@@ -1,7 +1,9 @@
-import { Controller, Post, Get, Body, Request, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Request, Param, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignAuthDto, LoginAuthDto, ConfirmAuthDto } from './dto';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
+@UseGuards(ThrottlerGuard) 
 @Controller('api/auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
@@ -16,8 +18,8 @@ export class AuthController {
         return this.authService.login(loginAuthDto);
     }
 
-    @Get('/confirm/:token')
-    async confirm(@Param() params: ConfirmAuthDto) {
-        return this.authService.confirm(params.token);
+    @Get('confirm/:token')
+    async confirm(@Param() confirmAuthDto: ConfirmAuthDto) {
+        return this.authService.confirm(confirmAuthDto);
     }
 }
